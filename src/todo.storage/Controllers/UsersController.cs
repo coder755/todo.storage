@@ -57,7 +57,7 @@ public class UserController
     }
     
     [HttpGet("{userId}")]
-    public async Task<ActionResult<User>> Get([FromRoute] string userId)
+    public async Task<ActionResult<model.User>> Get([FromRoute] string userId)
     {
         var isValidGuid = Guid.TryParse(userId, out var userGuid);
         if (!isValidGuid)
@@ -71,6 +71,6 @@ public class UserController
             return new NoContentResult();
         }
         
-        return user;
+        return user.ToModelObject();
     }
 }
