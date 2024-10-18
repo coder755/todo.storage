@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Amazon.SQS;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using todo.storage.db;
+using todo.storage.model.Queue;
+using todo.storage.Services.Queue;
 using todo.storage.Services.Todo;
 using todo.storage.Services.User;
 
@@ -18,10 +21,7 @@ var connectionString = GetConnectionString(builder.Configuration);
 builder.Services.AddDbContext<UsersContext>(options =>
 {
     var serverVersion = new MySqlServerVersion("8.0");
-    options.UseMySql(connectionString, serverVersion, optionsBuilder =>
-    {
-        optionsBuilder.EnableRetryOnFailure();
-    });
+    options.UseMySql(connectionString, serverVersion);
 });
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddMemoryCache();
@@ -41,6 +41,14 @@ builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
+
+// SQS
+builder.Services.AddAWSService<IAmazonSQS>();
+builder.Services.AddScoped<IQueueService, QueueService>();
+builder.Services.AddSingleton(new SqsData
+{
+    QueueUrl = Environment.GetEnvironmentVariable("QUEUE_URL") ?? string.Empty
+});
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();

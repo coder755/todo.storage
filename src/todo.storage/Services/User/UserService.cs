@@ -1,16 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using todo.storage.db;
+using todo.storage.model.Exceptions;
+using todo.storage.Services.Queue;
 
 namespace todo.storage.Services.User;
 
 public class UserService : IUserService
 {
     private readonly UsersContext _context;
+    private readonly IQueueService _queueService;
 
-
-    public UserService( UsersContext context)
+    public UserService( UsersContext context, IQueueService queueService)
     {
         _context = context;
+        _queueService = queueService;
     }
     
     public async Task<db.User> FindUser(Guid externalId)
@@ -23,10 +26,18 @@ public class UserService : IUserService
 
     public async Task<db.User> CreateUser(db.User user)
     {
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
     
-        return user;
+            return user;
+        }
+        catch (Exception)
+        {
+            await _queueService.AddCreateUserToQueue(user);
+            throw new CreateUserException();
+        }
     }
 
     public async Task<bool> DeleteUser(Guid externalId)

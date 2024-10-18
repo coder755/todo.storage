@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using todo.storage.db;
+using todo.storage.model.Exceptions;
 using todo.storage.model.Requests;
 using todo.storage.Services.User;
 
@@ -33,13 +34,14 @@ public class UserController
         {
             return new BadRequestResult();
         }
+
         try
         {
             var user = new User()
             {
                 ExternalId = userGuid,
                 ThirdPartyId = userGuid,
-                UserName = req.Username, 
+                UserName = req.Username,
                 FirstName = req.FirstName,
                 FamilyName = req.FamilyName,
                 Email = req.Email,
@@ -47,6 +49,10 @@ public class UserController
             };
             await _userService.CreateUser(user);
 
+            return new CreatedResult();
+        }
+        catch (CreateUserException)
+        {
             return new AcceptedResult();
         }
         catch (SystemException e)

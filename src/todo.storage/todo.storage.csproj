@@ -9,7 +9,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AWSSDK.Core" Version="3.7.400.29" />
+        <PackageReference Include="AWSSDK.Core" Version="3.7.400.36" />
+        <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.301" />
+        <PackageReference Include="AWSSDK.SQS" Version="3.7.400.36" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
@@ -25,10 +27,6 @@
     <ItemGroup>
       <ProjectReference Include="..\todo.storage.db\todo.storage.db.csproj" />
       <ProjectReference Include="..\todo.storage.model\todo.storage.model.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Services" />
     </ItemGroup>
 
     <ItemGroup>
