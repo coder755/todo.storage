@@ -19,7 +19,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "TODO_DB_ID": "root",
         "TODO_DB_PW": "bestpass123",
-        "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/442042533215/dev-queue"
+        "TO_PROC_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/442042533215/dev-toprocess-queue"
       }
     },
     "https": {
@@ -31,7 +31,8 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "TODO_DB_ID": "root",
-        "TODO_DB_PW": "bestpass123"
+        "TODO_DB_PW": "bestpass123",
+        "TO_PROC_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/442042533215/dev-toprocess-queue"
       }
     }
   }

@@ -2,5 +2,5 @@
 
 public class SqsData
 {
-    public string QueueUrl { get; set; }
+    public string ToProcessQueueUrl = "";
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,8 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using todo.storage.db;
 using todo.storage.model.Queue;
+using todo.storage.model.Topic;
 using todo.storage.Services.Queue;
 using todo.storage.Services.Todo;
+using todo.storage.Services.Topic;
 using todo.storage.Services.User;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,12 +45,21 @@ builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
 
-// SQS
+// Sqs
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddScoped<IQueueService, QueueService>();
+builder.Services.AddHostedService<SqsQueueListener>();
 builder.Services.AddSingleton(new SqsData
 {
-    QueueUrl = Environment.GetEnvironmentVariable("QUEUE_URL") ?? string.Empty
+    ToProcessQueueUrl = Environment.GetEnvironmentVariable("TO_PROC_QUEUE_URL") ?? string.Empty,
+});
+
+// Sns
+builder.Services.AddAWSService<IAmazonSimpleNotificationService>();
+builder.Services.AddScoped<ISnsService, SnsService>();
+builder.Services.AddSingleton(new SnsData
+{
+    TopicArn = Environment.GetEnvironmentVariable("SNS_ARN") ?? string.Empty,
 });
 
 builder.Services.AddSwaggerGen();

@@ -3,7 +3,6 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using todo.storage.model;
 using todo.storage.model.Queue;
 
 namespace todo.storage.Services.Queue;
@@ -13,6 +12,7 @@ public class QueueService : IQueueService
     private readonly IAmazonSQS _sqsClient;
     private readonly SqsData _sqsData;
     private readonly ILogger<QueueService> _logger;
+    private const string Typekey = "Type";
 
     public QueueService(IAmazonSQS sqsClient, SqsData sqsData, ILogger<QueueService> logger)
     {
@@ -21,13 +21,14 @@ public class QueueService : IQueueService
         _logger = logger;
     }
 
-    public async Task<bool> AddCreateUserToQueue(db.User user)
+
+    public async Task<bool> AddCreateUserReqToQueue(db.User user)
     {
         var messageBody = JsonConvert.SerializeObject(user);
         var attributes = new Dictionary<string, MessageAttributeValue>
         {
             {
-                "Type", new MessageAttributeValue
+                Typekey, new MessageAttributeValue
                 {
                     DataType = "String",
                     StringValue = MessageTypes.CreateUser.ToString()
@@ -43,7 +44,7 @@ public class QueueService : IQueueService
         };
         var sendMessageRequest = new SendMessageRequest
         {
-            QueueUrl = (_sqsData.QueueUrl),
+            QueueUrl = _sqsData.ToProcessQueueUrl,
             MessageBody = messageBody,
             MessageAttributes = attributes
         };

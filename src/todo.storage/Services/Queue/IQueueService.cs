@@ -1,6 +1,7 @@
-﻿namespace todo.storage.Services.Queue;
+﻿
+namespace todo.storage.Services.Queue;
 
 public interface IQueueService
 {
-    Task<bool> AddCreateUserToQueue(db.User user);
+    Task<bool> AddCreateUserReqToQueue(db.User user);
 }

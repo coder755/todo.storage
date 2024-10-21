@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using todo.storage.db;
 using todo.storage.model.Exceptions;
 using todo.storage.Services.Queue;
+using todo.storage.Services.Topic;
 
 namespace todo.storage.Services.User;
 
@@ -9,11 +11,15 @@ public class UserService : IUserService
 {
     private readonly UsersContext _context;
     private readonly IQueueService _queueService;
+    private readonly ISnsService _snsService;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService( UsersContext context, IQueueService queueService)
+    public UserService( UsersContext context, IQueueService queueService, ISnsService snsService, ILogger<UserService> logger)
     {
         _context = context;
         _queueService = queueService;
+        _snsService = snsService;
+        _logger = logger;
     }
     
     public async Task<db.User> FindUser(Guid externalId)
@@ -30,13 +36,18 @@ public class UserService : IUserService
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-    
+            await _snsService.PublishUserCreatedNotification(user.ExternalId);
             return user;
         }
-        catch (Exception)
+        catch (DbUpdateException e)
         {
-            await _queueService.AddCreateUserToQueue(user);
-            throw new CreateUserException();
+            _logger.LogError(e.Message);
+            throw new CreateUserException("Unable to save user to database. Doing nothing");
+        }
+        catch (Exception e)
+        {
+            await _queueService.AddCreateUserReqToQueue(user);
+            throw new CreateUserException("Unable to save user to database. Adding request to queue");
         }
     }
 
