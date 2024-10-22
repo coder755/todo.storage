@@ -1,23 +1,54 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using todo.storage.db;
+using todo.storage.model.Exceptions;
+using todo.storage.Services.Queue;
+using todo.storage.Services.Topic;
 
 namespace todo.storage.Services.Todo;
 
 public class TodoService : ITodoService
 {
     private readonly UsersContext _context;
+    private readonly IQueueService _queueService;
+    private readonly ISnsService _snsService;
+    private readonly ILogger<TodoService> _logger;
     
-    public TodoService(UsersContext context)
+    public TodoService(UsersContext context, IQueueService queueService, ISnsService snsService, ILogger<TodoService> logger)
     {
         _context = context;
+        _queueService = queueService;
+        _snsService = snsService;
+        _logger = logger;
     }
     
     public async Task<db.Todo> CreateTodo(db.Todo todo)
     {
-        _context.Todos.Add(todo);
-        await _context.SaveChangesAsync();
-    
-        return todo;
+        try
+        {
+            _context.Todos.Add(todo);
+            await _context.SaveChangesAsync();
+            await _snsService.PublishTodoCreatedNotification(todo.UserId);
+            return todo;
+        }
+        catch (DbUpdateException e)
+        {
+            _logger.LogError(e.Message);
+            throw new CreateUserException("Unable to save todo to database. Doing nothing");
+        }
+        catch (Exception e)
+        {
+            var todoModel = new model.Todo
+            {
+                ExternalId = todo.ExternalId,
+                Name = todo.Name,
+                IsComplete = todo.IsComplete,
+                CompleteDate = todo.CompleteDate
+            };
+            await _queueService.AddCreateTodoReqToQueue(todo.UserId, todoModel);
+            throw new CreateUserException("Unable to save todo to database. Adding request to queue");
+        }
+        
     }
     
     private async Task<db.Todo> FindTodo(Guid externalId, Guid userId)

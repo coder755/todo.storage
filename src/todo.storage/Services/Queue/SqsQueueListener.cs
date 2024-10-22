@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using todo.storage.model.Queue;
+using todo.storage.Services.Todo;
 using todo.storage.Services.User;
 
 namespace todo.storage.Services.Queue;
@@ -37,6 +38,7 @@ public class SqsQueueListener : IHostedService
                     QueueUrl = _queueUrl,
                     MaxNumberOfMessages = 10,
                     WaitTimeSeconds = 5,
+                    VisibilityTimeout = 5,
                     MessageAttributeNames = new List<string> {"All"}
                 };
 
@@ -59,6 +61,11 @@ public class SqsQueueListener : IHostedService
             case MessageTypes.CreateUser:
             {
                 await ProcessCreateUserMessage(message);
+                break;
+            }
+            case MessageTypes.CreateTodo:
+            {
+                await ProcessCreateTodoMessage(message);
                 break;
             }
             case MessageTypes.Unknown:
@@ -103,6 +110,37 @@ public class SqsQueueListener : IHostedService
         }
     }
     
+    private async Task ProcessCreateTodoMessage(Message message)
+    {
+        try
+        {
+            var request = GetTodoReqFromMessage(message);
+            var todoToAdd = new db.Todo()
+            {
+                ExternalId = request.Todo.ExternalId,
+                UserId = request.UserId,
+                Name = request.Todo.Name,
+                IsComplete = false,
+                CompleteDate = DateTime.Now,
+                CreatedDate = DateTime.Now,
+            };
+            
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                // Resolve the scoped service
+                var todoService = scope.ServiceProvider.GetRequiredService<ITodoService>();
+                // Use the queue service as needed
+                await todoService.CreateTodo(todoToAdd);
+            }
+            await _sqsClient.DeleteMessageAsync(_queueUrl, message.ReceiptHandle);
+            
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+        }
+    }
+    
     private MessageTypes GetMessageType(Message message)
     {
         var hasTypeKey = message.MessageAttributes.TryGetValue(Typekey, out var value);
@@ -124,6 +162,13 @@ public class SqsQueueListener : IHostedService
         var user = JsonConvert.DeserializeObject<model.User>(message.Body);
         return user;
     }
+    
+    private CreateTodoQueueMessage GetTodoReqFromMessage(Message message)
+    {
+        var todoRequest = JsonConvert.DeserializeObject<CreateTodoQueueMessage>(message.Body);
+        return todoRequest;
+    }
+
     
     public Task StopAsync(CancellationToken cancellationToken)
     {

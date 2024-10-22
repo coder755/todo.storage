@@ -26,6 +26,17 @@ public class SnsService : ISnsService
         var messageJson = JsonConvert.SerializeObject(message);
         await PublishMessageAsync(messageJson);
     }
+
+    public async Task PublishTodoCreatedNotification(Guid userId)
+    {
+        var message = new TopicMessage
+        {
+            Type = "TodoCreated",
+            UserId = userId
+        };
+        var messageJson = JsonConvert.SerializeObject(message);
+        await PublishMessageAsync(messageJson);
+    }
     
     private async Task PublishMessageAsync(string message)
     {
