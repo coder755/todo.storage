@@ -12,7 +12,7 @@ public class QueueService : IQueueService
     private readonly IAmazonSQS _sqsClient;
     private readonly SqsData _sqsData;
     private readonly ILogger<QueueService> _logger;
-    private const string Typekey = "Type";
+    public const string Typekey = "Type";
     private const string StringDataType = "String";
 
     public QueueService(IAmazonSQS sqsClient, SqsData sqsData, ILogger<QueueService> logger)

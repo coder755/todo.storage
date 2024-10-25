@@ -19,6 +19,9 @@ OUTPUT=`aws secretsmanager get-secret-value --secret-id todoDatabaseSecret --que
 DB_USERNAME=$( jq -r  '.username' <<< "${OUTPUT}" )
 DB_PASSWORD=$( jq -r  '.password' <<< "${OUTPUT}" )
 
+# run unit tests
+dotnet test
+
 # expected to be run from src folder
 docker build --build-arg dbn="${DB_USERNAME}" --build-arg dbpw="${DB_PASSWORD}" --build-arg ASPNETCORE_ENVIRONMENT="Development" -t $SERVICE_DOT_NAME -f "${SERVICE_DOT_NAME}/Dockerfile" .
 
