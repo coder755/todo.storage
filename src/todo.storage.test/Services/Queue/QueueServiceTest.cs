@@ -19,9 +19,7 @@ public class QueueServiceTest
     [SetUp]
     public void SetUp()
     {
-
         _sqsClientMock = new Mock<IAmazonSQS>();
-
         var sqsData = new SqsData();
         _queueService = new QueueService(_sqsClientMock.Object, sqsData, _loggerMock.Object);
     }
